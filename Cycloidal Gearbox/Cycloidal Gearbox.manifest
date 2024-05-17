@@ -1,0 +1,13 @@
+{
+	"autodeskProduct":	"Fusion",
+	"type":	"addin",
+	"id":	"e8837a2e-ba5a-4ded-8a07-911eb0a138a2",
+	"author":	"Varun Ahlawat",
+	"description":	{
+		"":	"Parametrically Generate the Cycloidal Drive"
+	},
+	"version":	"0",
+	"runOnStartup":	false,
+	"supportedOS":	"mac",
+	"editEnabled":	true
+}

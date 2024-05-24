@@ -14,21 +14,17 @@ def y_coordinate(C,R,N,E,theta):
         +(R*math.sin(theta + math.tanh((math.sin((1-N)*theta)) / ((C/(E*N)) - math.cos((1-N)*theta)))))
         +E*math.sin(N*theta))
 
-######## ALTERNATIVE EQUATION: Derived Using Polar Coordinates ########
-# def x_coordinate(R,r,s,theta):
-    # return (R+s*r)*(math.cos(theta))-(s*r*math.sin(theta*((R/r)+1)))
-# def y_coordinate(R,r,s,theta):
-    # return (R+s*r)*(math.sin(theta))-(s*r*math.cos(theta*((R/r)+1)))
-
-def points_generator(C,R,N,E, num_points=1000):
-        spline_points = []
-        angular_resolution = (2*math.pi)/num_points
-        i = 0
-        while(i<2*(math.pi)):
-            print(i)
-            i+=angular_resolution
-            spline_points.append(adsk.core.Point3D.create(x_coordinate(C,R,N,E,i), y_coordinate(C,R,N,E,i), 0))
-        return spline_points
+def section_generator(C,R,N,E, num_points=250):
+    spline_points = []
+    n = N-1 # Number of teeth
+    alpha = (2*math.pi)/(n) # Angle Subtended by one teeth(in radians)
+    angular_resolution = (alpha)/num_points
+    i = -2*angular_resolution
+    while(i<alpha+(2*angular_resolution)):
+        print(i)
+        spline_points.append(adsk.core.Point3D.create(x_coordinate(C,R,N,E,i), y_coordinate(C,R,N,E,i), 0))
+        i+=angular_resolution
+    return spline_points
 
 def fit_spline(points):
     app = adsk.core.Application.get()
@@ -44,14 +40,66 @@ def fit_spline(points):
         fitPoints.add(point)
 
     spline = sketch.sketchCurves.sketchFittedSplines.add(fitPoints)
-
-    # Extend the spline to join the first and last points
-    spline.isClosed = True
+    return spline
 
 def run(context):
     try:
-        circle_points = points_generator(4,0.1,50,0.05)
-        fit_spline(circle_points)
+        scale = 2 # Will make a disc of radius = 8 cm # Just there to change scale without affecting the teeth geometry
+
+        C = 4 * scale # True radius of the cycloidal disc
+        R = 0.05 * scale
+        teeth = 151 # Please keep it odd so that you can create even teeth(they'll be symmertrical about bothx and y axis)
+        E = 0.02 * scale
+
+        circle_points = section_generator(C, R, teeth+1, E) #151 teeth, odd for easily getting the second center along the x axis.
+        spline = fit_spline(circle_points)
+        
+        # Get the active sketch
+        app = adsk.core.Application.get()
+        ui = app.userInterface
+        design = app.activeProduct
+        active_sketch = design.activeSketch
+
+        if not active_sketch:
+            ui.messageBox('No active sketch found.')
+            return
+        
+        # # Get the selected entity in the sketch
+        # selected_entities = ui.activeSelections
+
+        selected_entity = spline
+        if selected_entity.count != 1:
+            ui.messageBox('Please select a single sketch entity.')
+            return
+
+        # Center point for the circular pattern:
+        center_point = adsk.core.Point3D.create(0, 0, 0)
+
+        # Number of instances to be created in the circular pattern:
+        num_instances = teeth
+        pattern_input = active_sketch.sketch.sketchCurves.sketchCircularPattern.circular_patterns.createInput(spline, center_point, num_instances)
+
+        # Create the circular pattern
+        active_sketch.sketch.sketchCurves.sketchCircularPattern.add(pattern_input)
+
+        ui.messageBox('Circular pattern created successfully.')
+
+        # Select the profile enclosed by the circular pattern
+        prof = active_sketch.profiles.item(0)  # Assuming the first profile is the enclosed area
+
+        # Create an extrusion
+        extrudes = root.features.extrudeFeatures
+        ext_input = extrudes.createInput(prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+
+        # Define the distance for the extrusion
+        distance = adsk.core.ValueInput.createByReal(1)  # Change this value to the desired extrusion depth
+        ext_input.setDistanceExtent(False, distance)
+        
+        # Create the extrusion
+        extrudes.add(ext_input)
+
+        ui.messageBox('Extrusion created successfully.')
+
 
     except Exception as e:
         ui = None

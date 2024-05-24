@@ -1,5 +1,6 @@
 # Project Robotic Arm(name-undecided):
-Rough initial design sketch.
+Rough initial design sketch.<br>
+
 ![Rough](image.png)
 
 # 1. Physical Design
@@ -74,3 +75,14 @@ Fusion360 Design File: https://a360.co/4buWZQg<br>
 
 
 # Possible Applications:
+- Camera Robot:
+  - Moving timelapses
+  - Head tracking
+  - Cinematic Shots
+- Scalable 3D Printer:
+  - If given appropriate rails it'll be able to print large scale shelters. As we expand beyond earth we would need habitats in space, Moon, and Mars.
+- An intelligent helping hand
+- Manufacturing of Compression Overwrapped Pressurized Vessles(COPVs)
+- Generalized Assembly Line Robot:
+  - Paint Job
+  - Welding Robot
